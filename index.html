@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Dahood Node</title>
+        <style>
+            /* http://meyerweb.com/eric/tools/css/reset/ 
+               v2.0 | 20110126
+               License: none (public domain)
+            */
+
+            html, body, div, span, applet, object, iframe,
+            h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+            a, abbr, acronym, address, big, cite, code,
+            del, dfn, em, img, ins, kbd, q, s, samp,
+            small, strike, strong, sub, sup, tt, var,
+            b, u, i, center,
+            dl, dt, dd, ol, ul, li,
+            fieldset, form, label, legend,
+            table, caption, tbody, tfoot, thead, tr, th, td,
+            article, aside, canvas, details, embed, 
+            figure, figcaption, footer, header, hgroup, 
+            menu, nav, output, ruby, section, summary,
+            time, mark, audio, video {
+                margin: 0;
+                padding: 0;
+                border: 0;
+                font-size: 100%;
+                font: inherit;
+                vertical-align: baseline;
+            }
+            /* HTML5 display-role reset for older browsers */
+            article, aside, details, figcaption, figure, 
+            footer, header, hgroup, menu, nav, section {
+                display: block;
+            }
+            body {
+                line-height: 1;
+            }
+            ol, ul {
+                list-style: none;
+            }
+            blockquote, q {
+                quotes: none;
+            }
+            blockquote:before, blockquote:after,
+            q:before, q:after {
+                content: '';
+                content: none;
+            }
+            table {
+                border-collapse: collapse;
+                border-spacing: 0;
+            }
+            input, textarea, select, button {
+                display: block;
+                box-sizing: border-box;
+                border: none;
+            }
+            input {
+                background: #eee;
+                color: $222;
+            }
+            input:focus, textarea:focus {
+                outline:none;
+            }
+            button {
+                background: #eee;
+                color: #222;
+            }
+            button:hover {
+                background: #999;
+            }
+            /* Personal CSS */
+            body {
+                font-family: 'Helvetica';
+            }
+            h1 {
+                display: block;
+                padding: 0 10px;
+                font-size: 6vh;
+                line-height: 8vh;
+                background: #333;
+                color: #fff;
+            }
+            form {
+                display: flex;
+                height: 8vh;
+            }
+            input, button {
+                font-size: 4vh;
+                padding: 0 10px;
+            }
+            input {
+                flex-grow: 1;
+            }
+            li {
+                list-style: none;
+            }
+            #container {
+                height: 100vh;
+            }
+            #message-area {
+                display: flex;
+                height: 84vh;
+            }
+            .list {
+                padding: 10px;
+                overflow-x: hidden;
+                overflow-y: scroll;
+            }
+            #user-list {
+                width: 200px;
+            }
+            #message-list {
+                flex-grow: 1;
+            }
+            .hidden {
+                display: none;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="container">
+            <h1>Dahood Node</h1>
+            <div id="message-area">
+                <ul id="user-list" class="list"></ul>
+                <ul id="message-list" class="list"></ul>
+            </div>
+            <form id="login-form" method="post" action="">
+                <input type="text" name="name" placeholder="Name"></input>
+                <button type="submit">Join</button>
+            </form>
+            <form id="chat-form" class="hidden" method="post" action="">
+                <input type="text" name="mesage" placeholder="Message"></input>
+                <button type="submit">Post</button>
+            </form>
+        </div>    
+        <script src="https://cdn.socket.io/socket.io-1.2.1.js"></script>
+        <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+        <script>
+            var socket = io();
+            $('#login-form').submit(function(){
+                socket.emit('name reg', $('#login-form input').val());
+                $('#login-form input').val('');
+                return false;
+            });
+            $('#chat-form').submit(function(){
+                socket.emit('chat message', $('#chat-form input').val());
+                $('#chat-form input').val('');
+            })
+            socket.on('user list', function(data) {
+                $('#user-list').empty();
+                var list = data.list;
+                for (i = 1; i < list.length; i++) {
+                    if (list[i] != null) {
+                        var user = list[i];
+                        $('#user-list').append(
+                            $('<li>', {id: ('userlist' + user.userid)}).text(user.name)
+                        );
+                    }
+                }
+            });
+            socket.on('name reg report', function(data) {
+                if (data) {
+                    alert('success');
+                    $('#login-form').addClass('hidden');
+                    $('#chat-form').removeClass('hidden');
+                } else {
+                    alert('Name taken, choose something else!');
+                }
+            });
+            socket.on('user message', function(data) {
+                $('#message-list').append($('<li>', {class: 'user-message'}).text(data));
+            });
+            socket.on('server message', function(data) {
+                $('#message-list').append($('<li>', {class: 'server-message'}).text(data));
+            });
+        </script>
+    </body>
+</html>
