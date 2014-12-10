@@ -8,12 +8,12 @@ Install
 
 1. Install [Node.js](http://nodejs.org/)
 2. Clone repo to chosen directory.
-3. From directory run: 'npm install' to install dependencies.
+3. From directory run: `npm install` to install dependencies.
 
 Usage
 -----
 
-1. From directory run: 'node index.js' to start server.
+1. From directory run: `node index.js` to start server.
 2. Server listens on localhost:8080 by default, go here in a browser to open a new client instance.
 
 Enjoy
