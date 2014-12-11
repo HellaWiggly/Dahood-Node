@@ -4,6 +4,7 @@ var io = require('socket.io')(http);
 
 var usercount = 0;
 var users = new Array();
+var clients = new Array();
 var userListLock = false;
 
 app.get('/', function(req, res) {
@@ -18,6 +19,7 @@ io.sockets.on('connection', function(client) {
     var name = "User" + usercount;
     var user = { userid: userid, name: name };
     users[userid] = user;
+    clients[userid] = client;
     
     console.log(name + ' connected...');
     broadcastUserList();
@@ -27,6 +29,7 @@ io.sockets.on('connection', function(client) {
     client.on('disconnect', function() {
         console.log(name + ' disconnected...');
         users[userid] = null;
+        clients[userid] = null;
         broadcastUserList();
         io.emit('server message', name + ' left.');
     });
@@ -36,12 +39,16 @@ io.sockets.on('connection', function(client) {
         userListLock = true;
         console.log(name + ' registers name as: ' + data);
         var success = true;
-        for (i = 0; i < users.length; i++) {
-            if (users[i] != null) {
-                if (users[i].name == data) {
-                    success = false;
+        if (data.indexOf(' ') == -1) {
+            for (i = 0; i < users.length; i++) {
+                if (users[i] != null) {
+                    if (users[i].name == data) {
+                        success = false;
+                    }
                 }
             }
+        } else {
+            success = false;
         }
         client.emit('name reg report', success);
         if (success) {
@@ -50,15 +57,50 @@ io.sockets.on('connection', function(client) {
             user = { userid: userid, name: name };
             users[userid] = user;
             broadcastUserList();
+        } else {
+            console.log('Name registration for ' + user.name + ' failed.');
         }
         userListLock = false;
     });
     
     client.on('chat message', function(data) {
         console.log(name + ": " + data);
-        io.emit('user message', name + ": " + data);
+        if (data.substring(0,1) == '/') {
+            data = data.substring(1);
+            var command = data.substring(0, data.indexOf(' '));
+            data = data.substring(data.indexOf(' ')+1);
+            switch(command) {
+                case 'w': whisper(user, data); break;
+                case 'whisper': whisper(user, data); break;
+                case 'pm': whisper(user, data); break;
+                default: client.emit('server message', 'Command not recognised.');
+            }
+        } else {
+            io.emit('user message', name + ": " + data);
+        }
     });
 });
+
+function whisper(user, data) {
+    if (data.indexOf(' ') == -1) {
+        clients[user.userid].emit('server message', 'Enter a message.');
+    } else {
+        var recipient = data.substring(0, data.indexOf(' '));
+        var message = data.substring(data.indexOf(' ')+1);
+        var found = false;
+        for (i = 0; i < users.length; i++) {
+            if (users[i] != null) {
+                if (users[i].name == recipient) {
+                    found = true;
+                    clients[i].emit('user whisper', user.name + ': ' + message);
+                }
+            }
+        }
+        if (!found) {
+            clients[user.userid].emit('server message', 'User not found.');
+        }
+    }
+}
 
 function broadcastUserList() {
     io.emit('user list', { list: users });
