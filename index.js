@@ -12,6 +12,7 @@ app.get('/', function(req, res) {
 
 io.sockets.on('connection', function(client) {
     while (userListLock) {}
+    userListLock = true;
     usercount += 1;
     var userid = usercount;
     var name = "User" + usercount;
@@ -21,6 +22,7 @@ io.sockets.on('connection', function(client) {
     console.log(name + ' connected...');
     broadcastUserList();
     io.emit('server message', name + ' arrived.');
+    userListLock = false;
     
     client.on('disconnect', function() {
         console.log(name + ' disconnected...');
@@ -30,27 +32,26 @@ io.sockets.on('connection', function(client) {
     });
     
     client.on('name reg', function(data) {
-        if (!userListLock) {
-            userListLock = true;
-            console.log(name + ' registers name as: ' + data);
-            var success = true;
-            for (i = 0; i < users.length; i++) {
-                if (users[i] != null) {
-                    if (users[i].name == data) {
-                        success = false;
-                    }
+        while (userListLock) {}
+        userListLock = true;
+        console.log(name + ' registers name as: ' + data);
+        var success = true;
+        for (i = 0; i < users.length; i++) {
+            if (users[i] != null) {
+                if (users[i].name == data) {
+                    success = false;
                 }
             }
-            client.emit('name reg report', success);
-            if (success) {
-                io.emit('server message', name + ' is now known as ' + data + '.');
-                name = data;
-                user = { userid: userid, name: name };
-                users[userid] = user;
-                broadcastUserList();
-            }
-            userListLock = false;
         }
+        client.emit('name reg report', success);
+        if (success) {
+            io.emit('server message', name + ' is now known as ' + data + '.');
+            name = data;
+            user = { userid: userid, name: name };
+            users[userid] = user;
+            broadcastUserList();
+        }
+        userListLock = false;
     });
     
     client.on('chat message', function(data) {
