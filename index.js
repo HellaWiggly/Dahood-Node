@@ -25,7 +25,7 @@ io.sockets.on('connection', function(client) {
     client.on('disconnect', function() {
         console.log(name + ' disconnected...');
         users[userid] = null;
-        io.emit('user list', { list: users });
+        broadcastUserList();
         io.emit('server message', name + ' left.');
     });
     
