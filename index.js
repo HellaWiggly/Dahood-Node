@@ -7,7 +7,7 @@ var users = new Array();
 var clients = new Array();
 var userListLock = false;
 
-app.get('/', function(req, res) {
+app.get('/app', function(req, res) {
     res.sendFile(__dirname+'/index.html');
 });
 
@@ -106,6 +106,6 @@ function broadcastUserList() {
     io.emit('user list', { list: users });
 }
 
-http.listen(8080, function() {
+http.listen(8000, function() {
     console.log('Server online...');
 });
