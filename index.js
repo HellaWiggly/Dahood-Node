@@ -1,5 +1,4 @@
-var express = require('express');
-var app = express();
+var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 
@@ -8,15 +7,8 @@ var users = new Array();
 var clients = new Array();
 var userListLock = false;
 
-app.set('views', __dirname + '/views');
-app.set('view engine', 'jade');
-app.use(express.logger('dev'));
-app.use(express.static(__dirname + '/public'));
-
-app.get('/', function (req, res) {
-    res.render('chat',
-        { title : 'Dahood Innit' }
-    )
+app.get('/app', function(req, res) {
+    res.sendFile(__dirname+'/index.html');
 });
 
 io.sockets.on('connection', function(client) {
@@ -114,4 +106,6 @@ function broadcastUserList() {
     io.emit('user list', { list: users });
 }
 
-app.listen(8080);
+http.listen(8000, function() {
+    console.log('Server online...');
+});
